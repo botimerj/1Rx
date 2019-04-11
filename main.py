@@ -9,14 +9,14 @@ gp = GlobalParameters()
 def test_mvm():
 
     M = 4 
-    N = 2 
-    res = 4
+    N = 4 
+    res = 8 
 
     mvm = MVM()
     
     vec = np.random.random([1,M])*2-1
     mat = np.random.random([M,N])*2-1
-
+    
     result = mvm.dot(vec, mat, res)
     result_t = mvm.dot_truth(vec, mat, res)
 
@@ -32,7 +32,7 @@ def test_mvm():
 def test_rram():
     M = 1 
     N = 2 
-    res = 8 
+    res = 2 
 
 
     vec_q = np.random.random([1,M])*2-1
@@ -63,5 +63,5 @@ def test_rram():
 if __name__=="__main__":
     #main()
     #for i in range(10):
-    test_rram()
-    #test_mvm()
+    #test_rram()
+    test_mvm()

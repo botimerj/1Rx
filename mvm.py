@@ -35,7 +35,8 @@ class MVM():
         print("mat in shape: ", mat.shape)
         print("RRAM arr shape: ", self.rram_arr_size)
 
-        self.compute_steps = gp.rram.size_y/gp.mvm.active_rows*res
+
+        self.compute_steps = int(gp.rram.size_y/gp.mvm.active_rows)
         self.adc_res = gp.rram.n_bit + np.log2(gp.mvm.active_rows)
 
         # Quantize inputs
@@ -46,6 +47,11 @@ class MVM():
         bias_reg =  np.sum(mat_q,0)*2**(res-1)
         bias_reg += np.sum(vec_q)*2**(res-1)
         bias_reg += (2**(res-1))**2*vec.shape[1]
+
+        mat_q += 2**(res-1)
+        vec_q += 2**(res-1)
+
+
 
         # Create RRAMs and load with data
         rram_arr = [ [Rram() for j in range(self.rram_arr_size[1])] 
@@ -61,14 +67,22 @@ class MVM():
 
 
         # Compute on RRAM
+        # Initialize result registers
         result = np.zeros([self.rram_arr_size[1]*gp.rram.size_x])
+        
+        # Compute over each rram
         for i in range(self.rram_arr_size[0]): 
             for j in range(self.rram_arr_size[1]):
-                vec_in = np.zeros(gp.rram.size_y)
-                v_tmp = vec_q[0][i*gp.rram.size_y:(i+1)*gp.rram.size_y]
-                vec_in[:v_tmp.shape[0]] = v_tmp
-                a = rram_arr[i][j].read(vec_in, res)
-                result[j*w_per_rram_x:(j+1)*w_per_rram_x] += a.squeeze()
+                # Only activate gp.mvm.active_rows at a time 
+                for k in range(self.compute_steps):
+                    mask = np.zeros(gp.rram.size_y)
+                    mask[k*gp.mvm.active_rows:(k+1)*gp.mvm.active_rows] = 1
+                    vec_in = np.zeros(gp.rram.size_y)
+                    v_tmp = vec_q[0][i*gp.rram.size_y:(i+1)*gp.rram.size_y]
+                    vec_in[:v_tmp.shape[0]] = v_tmp
+                    vec_in = vec_in*mask
+                    a = rram_arr[i][j].read(vec_in, res)
+                    result[j*w_per_rram_x:(j+1)*w_per_rram_x] += a.squeeze()
 
         result = result[:mat_q.shape[1]]
 
