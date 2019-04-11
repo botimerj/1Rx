@@ -2,11 +2,11 @@
 import numpy as np
 from rram import Rram
 
-from global_parameters import GlobalParameters
-gp = GlobalParameters()
-
 class MVM():
-    def __init__(self):
+    def __init__(self, gp):
+        # Global params
+        self.gp = gp
+
         # Energy variables
         self.read_energy = 0
         self.write_energy = 0
@@ -25,19 +25,21 @@ class MVM():
         return np.dot(vec_q, mat_q)
 
     def dot(self, vec, mat, res):
+        # Variables useful for calculation
+        rram_x = self.gp.rram.size_x
+        rram_y = self.gp.rram.size_y
+        n_bit  = self.gp.rram.n_bit
+        a_rows = self.gp.mvm.active_rows
 
         # Calculate parameters for mapping RRAM
-        w_per_rram_x = int(gp.rram.size_x/np.floor(res/gp.rram.n_bit))
-        self.rram_arr_size = [int(np.ceil(mat.shape[0]/gp.rram.size_y)),
+        w_per_rram_x = int(rram_x/np.floor(res/n_bit))
+        self.rram_arr_size = [int(np.ceil(mat.shape[0]/rram_y)),
                               int(np.ceil(mat.shape[1]/w_per_rram_x))]
 
-        print("vec in shape: ", vec.shape)
-        print("mat in shape: ", mat.shape)
-        print("RRAM arr shape: ", self.rram_arr_size)
 
 
-        self.compute_steps = int(gp.rram.size_y/gp.mvm.active_rows)
-        self.adc_res = gp.rram.n_bit + np.log2(gp.mvm.active_rows)
+        self.compute_steps = int(rram_y/a_rows)
+        self.adc_res = n_bit + np.log2(a_rows)
 
         # Quantize inputs
         mat_q = np.floor(np.copy(mat)*(2**(res-1)-0.001))
@@ -52,43 +54,48 @@ class MVM():
         vec_q += 2**(res-1)
 
 
-
         # Create RRAMs and load with data
-        rram_arr = [ [Rram() for j in range(self.rram_arr_size[1])] 
-                             for i in range(self.rram_arr_size[0]) ]
+        rram_arr = [ [Rram(self.gp) for j in range(self.rram_arr_size[1])] 
+                                    for i in range(self.rram_arr_size[0]) ]
         
         for i in range(self.rram_arr_size[0]): 
             for j in range(self.rram_arr_size[1]):
-                yidx = int(i*gp.rram.size_y)
+                yidx = int(i*rram_y)
                 xidx = int(j*w_per_rram_x)
-                sub_mat = mat_q[yidx:yidx+gp.rram.size_y,\
+                sub_mat = mat_q[yidx:yidx+rram_y,\
                                 xidx:xidx+w_per_rram_x]
                 rram_arr[i][j].write(sub_mat, res)
 
 
         # Compute on RRAM
         # Initialize result registers
-        result = np.zeros([self.rram_arr_size[1]*gp.rram.size_x])
+        result = np.zeros([self.rram_arr_size[1]*rram_x])
         
         # Compute over each rram
         for i in range(self.rram_arr_size[0]): 
             for j in range(self.rram_arr_size[1]):
-                # Only activate gp.mvm.active_rows at a time 
+                # Only activate a_rows at a time 
                 for k in range(self.compute_steps):
-                    mask = np.zeros(gp.rram.size_y)
-                    mask[k*gp.mvm.active_rows:(k+1)*gp.mvm.active_rows] = 1
-                    vec_in = np.zeros(gp.rram.size_y)
-                    v_tmp = vec_q[0][i*gp.rram.size_y:(i+1)*gp.rram.size_y]
+                    # Generate input mask (a_row hot encoded)
+                    mask = np.zeros(rram_y)
+                    mask[k*a_rows:(k+1)*a_rows] = 1
+
+                    # Create correct size input vector 
+                    vec_in = np.zeros(rram_y)
+                    v_tmp = vec_q[0][i*rram_y:(i+1)*rram_y]
                     vec_in[:v_tmp.shape[0]] = v_tmp
                     vec_in = vec_in*mask
+                    
+                    # Perform rram mac
                     a = rram_arr[i][j].read(vec_in, res)
+                    # Accumulate result
                     result[j*w_per_rram_x:(j+1)*w_per_rram_x] += a.squeeze()
 
+        # Truncate unsed registers
         result = result[:mat_q.shape[1]]
 
+        # Add in bias
         result = result - bias_reg
-
-        #return np.dot(vec, mat)
         return result
 
     def print_stats(self):

@@ -2,18 +2,17 @@
 import sys
 import numpy as np
 
-from global_parameters import GlobalParameters
-gp = GlobalParameters()
-
-
 class Rram:
     
-    def __init__(self):
+    def __init__(self, gp):
+        self.gp = gp
 
         self.ron  = gp.rram.ron
         self.roff = gp.rram.roff
         self.rvar = gp.rram.rvar
         self.rp   = gp.rram.rp
+
+        self.vdiff = gp.rram.von - gp.rram.voff
 
         self.n_bit = gp.rram.n_bit
         self.rlsb = (self.roff-self.ron)/(2**self.n_bit-1)
@@ -64,7 +63,7 @@ class Rram:
         # Bit-serial approach
         dout = np.zeros([1,self.x])
         for i in range(res):
-            v = ((np.copy(ifm)>>i)&1)*(gp.rram.von-gp.rram.voff)
+            v = ((ifm>>i)&1)*(self.vdiff)
             i_out = np.dot(v, self.arr)
             dout = dout + (self.adc(i_out)<<i)
         dout = np.array(dout,dtype=int)
@@ -84,9 +83,10 @@ class Rram:
         
 
     def adc(self, i_in):
-        rows = gp.mvm.active_rows
-        vdiff = gp.rram.von-gp.rram.voff
-        i_lsb = vdiff*self.glsb
+        #bits = np.ceil(self.n_bit + np.log2(gp.mvm.active_rows))
 
-        return np.array(np.floor(i_in/i_lsb),dtype=int)
+        i_lsb = self.vdiff*self.glsb
+        return np.array(np.floor((i_in+i_lsb/2)/i_lsb),dtype=int)
+
+        #return np.array(np.floor(i_in/i_lsb),dtype=int)
 

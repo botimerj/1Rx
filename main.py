@@ -4,30 +4,44 @@ from rram import Rram
 from mvm import MVM
 
 from global_parameters import GlobalParameters 
-gp = GlobalParameters()
 
 def test_mvm():
 
-    M = 4 
-    N = 4 
-    res = 8 
+    # Default global params
+    gp = GlobalParameters()
+    gp.
 
-    mvm = MVM()
-    
-    vec = np.random.random([1,M])*2-1
-    mat = np.random.random([M,N])*2-1
-    
-    result = mvm.dot(vec, mat, res)
-    result_t = mvm.dot_truth(vec, mat, res)
+    rram_dim = [16, 32, 64]
+    n_bit = [1, 2, 4]
+    active_rows = [1, 2, 4]
 
-    print(result)
-    print(result_t)
-    if False in (result == result_t):
-        print("Fail")
-    else:
-        print("Pass")
+    for d in rram_dim:
+        for n in n_bit:
+            for a in active_rows:
+                gp.rram.size_x = d
+                gp.rram.size_y = d
+                gp.rram.n_bit = n 
+                gp.mvm.active_rows = a 
+                print('{}x{} | {} | {} :'.format(d,d,n,a),end='')
 
-    #mvm.print_stats()
+                
+                M = 64 
+                N = 64 
+                res = 8 
+
+                mvm = MVM(gp)
+                
+                vec = np.random.random([1,M])*2-1
+                mat = np.random.random([M,N])*2-1
+                
+                result = mvm.dot(vec, mat, res)
+                result_t = mvm.dot_truth(vec, mat, res)
+
+
+                if False in (result == result_t):
+                    print("Fail")
+                else:
+                    print("Pass")
 
 def test_rram():
     M = 1 
