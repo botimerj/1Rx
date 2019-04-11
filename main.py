@@ -6,42 +6,43 @@ from mvm import MVM
 from global_parameters import GlobalParameters 
 
 def test_mvm():
-
     # Default global params
     gp = GlobalParameters()
-    gp.
 
-    rram_dim = [16, 32, 64]
-    n_bit = [1, 2, 4]
-    active_rows = [1, 2, 4]
+    dim = [16]
+    n_bit = [1, 2]
+    active_rows = [2, 3, 4, 8, 16]
+    settings = [[d,n,a] for d in dim for n in n_bit for a in active_rows]
 
-    for d in rram_dim:
-        for n in n_bit:
-            for a in active_rows:
-                gp.rram.size_x = d
-                gp.rram.size_y = d
-                gp.rram.n_bit = n 
-                gp.mvm.active_rows = a 
-                print('{}x{} | {} | {} :'.format(d,d,n,a),end='')
+    print('R-Dim | Nb | AR')
+    print('---------------')
+    for s in settings:
+        gp.rram.size_x = s[0]
+        gp.rram.size_y = s[0]
+        gp.rram.n_bit  = s[1] 
+        gp.mvm.active_rows =  s[2]
+        print('{}x{} | {} | {} :'.format(s[0],s[0],s[1],s[2]),end='')
 
-                
-                M = 64 
-                N = 64 
-                res = 8 
+        
+        M = 64 
+        N = 64 
+        res = 8 
 
-                mvm = MVM(gp)
-                
-                vec = np.random.random([1,M])*2-1
-                mat = np.random.random([M,N])*2-1
-                
-                result = mvm.dot(vec, mat, res)
-                result_t = mvm.dot_truth(vec, mat, res)
+        mvm = MVM(gp)
+        
+        vec = np.random.random([1,M])*2-1
+        mat = np.random.random([M,N])*2-1
+        
+        result = mvm.dot(vec, mat, res)
+        result_t = mvm.dot_truth(vec, mat, res)
 
 
-                if False in (result == result_t):
-                    print("Fail")
-                else:
-                    print("Pass")
+        if False in (result == result_t):
+            print("Fail")
+        else:
+            print("Pass")
+
+
 
 def test_rram():
     M = 1 
@@ -75,7 +76,4 @@ def test_rram():
     
 
 if __name__=="__main__":
-    #main()
-    #for i in range(10):
-    #test_rram()
     test_mvm()

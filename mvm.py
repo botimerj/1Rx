@@ -38,7 +38,7 @@ class MVM():
 
 
 
-        self.compute_steps = int(rram_y/a_rows)
+        self.compute_steps = int(np.ceil(rram_y/a_rows))
         self.adc_res = n_bit + np.log2(a_rows)
 
         # Quantize inputs
@@ -80,7 +80,7 @@ class MVM():
                     mask = np.zeros(rram_y)
                     mask[k*a_rows:(k+1)*a_rows] = 1
 
-                    # Create correct size input vector 
+                    # Create correct sized input vector 
                     vec_in = np.zeros(rram_y)
                     v_tmp = vec_q[0][i*rram_y:(i+1)*rram_y]
                     vec_in[:v_tmp.shape[0]] = v_tmp

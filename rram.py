@@ -88,5 +88,3 @@ class Rram:
         i_lsb = self.vdiff*self.glsb
         return np.array(np.floor((i_in+i_lsb/2)/i_lsb),dtype=int)
 
-        #return np.array(np.floor(i_in/i_lsb),dtype=int)
-
