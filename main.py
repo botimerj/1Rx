@@ -9,9 +9,9 @@ def test_mvm():
     # Default global params
     gp = GlobalParameters()
 
-    dim = [16]
-    n_bit = [1, 2]
-    active_rows = [2, 3, 4, 8, 16]
+    dim = [32]
+    n_bit = [1]
+    active_rows = [1, 2, 3, 4, 8, 10, 12, 14, 16]
     settings = [[d,n,a] for d in dim for n in n_bit for a in active_rows]
 
     print('R-Dim | Nb | AR')

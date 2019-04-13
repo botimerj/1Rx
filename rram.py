@@ -53,7 +53,9 @@ class Rram:
         for i in range(self.y): 
             for j in range(self.x): 
                 self.arr[i][j]  = 1/self.roff + self.glsb*self.dig_arr[i][j]
-                self.arr[i][j]  = 1/(1/self.arr[i][j] + np.random.normal(0,self.rvar))
+
+                self.arr[i][j]  = 1/(10**(np.log10(1/self.arr[i][j]) + np.random.normal(0,self.rvar)))
+                #self.arr[i][j]  = 1/(1/self.arr[i][j] + np.random.normal(0,self.rvar))
                 #print(1/self.arr[i][j])
     
     def read(self, ifmap, res):
