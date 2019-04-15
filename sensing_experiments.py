@@ -7,23 +7,14 @@ import itertools as itt
 from tqdm import tqdm
 
 def main():
-
-    # ADC settings
-    N = 2           # ADC resolution
-
-    vdy = 1         # V-dynamic range
-    vth = 0.3       # Threshold voltage
-    vm = vth+vdy
-
-    d_vth = 0.001   # Comparator vth mismatch
     
     # RRAM settings
 
-    n_rows = 8
-    n_bit = 1
-    roff = 1e5
+    n_rows = 3
+    n_bit = 2
+    roff = 1e6
     ron  = 1e3
-    rvar_exp = 0.002
+    rvar_exp = 0.0001
 
     vdiff = 0.1
 
@@ -33,14 +24,14 @@ def main():
     glist = np.array([goff+glsb*i for i in range(2**n_bit)])
 
     i_list_samp = []
-    NNN = range(200)
+    NNN = range(500)
     for nnn in tqdm(NNN):
         # Add offset to glist
         glist_var = [1/(10**(np.log10(1/g) + np.random.normal(0,rvar_exp))) for g in glist]
 
         # Generate all possible current outputs
         cell_comb = list(itt.combinations_with_replacement(glist_var,n_rows))
-        row_comb = list(itt.product([0,1],repeat=n_rows))
+        row_comb = list(itt.product([0,vdiff],repeat=n_rows))
 
         i_list = [np.sum(np.array(c)*np.array(r)) for c in cell_comb for r in row_comb]
         #i_list = np.array(list(set(i_list)))
@@ -50,16 +41,16 @@ def main():
     i_list_samp = np.array(i_list_samp)
     i_list_avg = np.average(i_list_samp,0)
     i_list_std = np.std(i_list_samp,0)
-    print(i_list_avg)
-    print(i_list_std)
+    #print(i_list_avg)
+    #print(i_list_std)
 
     imin = np.min(i_list)
     imax = np.max(i_list)
 
     # Reference generation
-    ilsb = glsb*vdiff
-    iref = np.array([ilsb*i for i in range(2**N-1)])+ilsb/2
-    print(iref)
+    adc = ADC(n_bit, n_rows, ron, roff, rvar_exp, vdiff)
+    #ilsb = glsb*vdiff
+    #i_ref = np.array([ilsb*i for i in range(2**N-1)])+ilsb/2
     #iin_ideal = np.array([0, ilsb, 2*ilsb, 3*ilsb]) 
 
 
@@ -67,14 +58,17 @@ def main():
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
     irange = imax-imin
-    ax.set_xlim(imin-irange*0.1,imax+irange*0.1)
+    #ax.set_xlim(imin-irange*0.1,imax+irange*0.1)
     ax.set_ylim(0, 10)
     
     plt.hlines(2, imin, imax)
 
-    for i in i_list:
+    for i in i_list_samp:
         plt.vlines(i, 2, 5)
         #plt.text(i, 3, '{:.2f}'.format(i*1e6), horizontalalignment='center')
+
+    for i in adc.i_ref:
+        plt.vlines(i, 2, 8)
 
     for i in range(len(i_list_avg)):
         mu = i_list_avg[i]
@@ -98,6 +92,63 @@ def main():
     #    plt.vlines(i, 2-1/4, 2+1/4)
     #    plt.text(i, 1, '{:.2f}'.format(i*1e6), horizontalalignment='center')
 
+
+class ADC():
+    def __init__(self, n_bit, n_rows, ron, roff, rvar_exp, vdiff):
+
+
+        self.N = int(n_bit + np.floor(np.log2(n_bit*n_rows)))
+        print(self.N)
+        glsb = (1/ron - 1/roff)/(2**n_bit-1)
+        #self.i_ref = np.array([(2**i-1/2)*glsb*vdiff for i in range(self.N)])
+        self.i_ref = np.array([(2**i)*glsb*vdiff for i in range(self.N)])
+        self.i_off = glsb*vdiff/2
+
+        self.vdy = 1         # V-dynamic range
+        self.rf = 2*self.vdy/(glsb*vdiff*2**self.N)
+        print(np.sum(self.i_ref)*self.rf)
+        d_vth = 0.01   # Comparator vth mismatch
+        
+        print(self.i_ref*self.rf)
+
+    def convert(self, i_in):
+        v_in = i_in*self.rf
+        #print('vin: {:.3f}'.format(v_in))
+        i_tot = -self.i_off
+        dout = 0
+        for i in range(self.N):
+            i_tot += self.i_ref[self.N-i-1]
+            #print('{:.3f}'.format(self.rf*i_tot))
+            if v_in - i_tot*self.rf > 0 :
+                #print("1",end='')
+                dout += 2**(self.N-1-i)
+            else:
+                i_tot -= self.i_ref[self.N-i-1]
+                #print("0",end='')
+
+        #print("")
+        return dout
+        
+# Test ADC logic
+def adc_test():
+
+    n_rows = 3
+    n_bit = 2
+    roff = 1e6
+    ron  = 1e3
+    rvar_exp = 0.0001
+
+    vdiff = 0.1
+    
+    goff = 1/roff
+    gon  = 1/ron
+    glist = np.linspace(0, n_rows*gon, 1000) 
+    #glist = [0, gon, 2*gon, 3*gon]
+
+    adc = ADC(n_bit, n_rows, ron, roff, rvar_exp, vdiff)
+    dout = [adc.convert(g*vdiff) for g in glist]
+    plt.plot(glist*vdiff*adc.rf, dout)
+    plt.show()
 
 # Logarithmic R variance 
 def rvar_exp():
@@ -163,7 +214,9 @@ def rvar():
     plt.show()
 
 
+
 main()
+#adc_test()
 #rvar()
 #rvar_exp()
 

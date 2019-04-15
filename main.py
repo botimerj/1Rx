@@ -1,6 +1,6 @@
 
 import numpy as np
-from rram import Rram
+from rram import RRAM
 from mvm import MVM
 
 from global_parameters import GlobalParameters 
@@ -10,8 +10,8 @@ def test_mvm():
     gp = GlobalParameters()
 
     dim = [32]
-    n_bit = [1]
-    active_rows = [1, 2, 3, 4, 8, 10, 12, 14, 16]
+    n_bit = [1,2]
+    active_rows = [1, 2, 3, 4, 8, 12, 14, 16]
     settings = [[d,n,a] for d in dim for n in n_bit for a in active_rows]
 
     print('R-Dim | Nb | AR')
@@ -56,7 +56,7 @@ def test_rram():
     mat_q = np.random.random([M,N])*2-1
     mat_q = np.array(np.floor(mat_q*(2**(res-1)-0.001)),dtype=int)
 
-    rram = Rram()
+    rram = RRAM()
     rram.write(mat_q, res)
 
     bias_reg =  np.sum(mat_q,0)*2**(res-1)

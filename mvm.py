@@ -1,6 +1,6 @@
 
 import numpy as np
-from rram import Rram
+from rram import RRAM
 
 class MVM():
     def __init__(self, gp):
@@ -55,7 +55,7 @@ class MVM():
 
 
         # Create RRAMs and load with data
-        rram_arr = [ [Rram(self.gp) for j in range(self.rram_arr_size[1])] 
+        rram_arr = [ [RRAM(self.gp) for j in range(self.rram_arr_size[1])] 
                                     for i in range(self.rram_arr_size[0]) ]
         
         for i in range(self.rram_arr_size[0]): 
