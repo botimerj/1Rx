@@ -1,5 +1,6 @@
 
 import numpy as np
+import time
 from rram import RRAM
 from mvm import MVM
 
@@ -9,9 +10,9 @@ def test_mvm():
     # Default global params
     gp = GlobalParameters()
 
-    dim = [32]
-    n_bit = [1,2]
-    active_rows = [1, 2, 3, 4, 8, 12, 14, 16]
+    dim = [32, 64]
+    n_bit = [1,2,4]
+    active_rows = [1, 2, 3, 8, 16]
     settings = [[d,n,a] for d in dim for n in n_bit for a in active_rows]
 
     print('R-Dim | Nb | AR')
@@ -33,8 +34,13 @@ def test_mvm():
         vec = np.random.random([1,M])*2-1
         mat = np.random.random([M,N])*2-1
         
+        start = time.time()
         result = mvm.dot(vec, mat, res)
+        print('{:.2f}'.format((time.time()-start)*1e3), end=' ')
+
+        start = time.time()
         result_t = mvm.dot_truth(vec, mat, res)
+        print('{:.2f}'.format((time.time()-start)*1e3), end=' ')
 
 
         if False in (result == result_t):

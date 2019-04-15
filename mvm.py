@@ -39,7 +39,7 @@ class MVM():
 
 
         self.compute_steps = int(np.ceil(rram_y/a_rows))
-        self.adc_res = n_bit + np.log2(a_rows)
+        #self.adc_res = n_bit + np.log2(a_rows)
 
         # Quantize inputs
         mat_q = np.floor(np.copy(mat)*(2**(res-1)-0.001))

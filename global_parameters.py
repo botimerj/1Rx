@@ -3,7 +3,7 @@ import sys
 
 import configparser as cp
 
-class Rram:
+class RRAM:
     def __init__(self, config, name="RRAM"):
         self.size_x    = int(config.get(name, "size_x"))
         self.size_y    = int(config.get(name, "size_y"))
@@ -21,15 +21,20 @@ class Rram:
 class MVM:
     def __init__(self, config, name="MVM"):
         self.active_rows = int(config.get(name, "active_rows"))
-        self.adc_res = 0
+
+class ADC:
+    def __init__(self, config, name="ADC"):
+        self.comp_var = float(config.get(name, "comp_var"))
+
 
 class GlobalParameters:
 
     def __init__(self):
         config = cp.ConfigParser()
         config.read("config.ini")
-        self.rram = Rram(config)
+        self.rram = RRAM(config)
         self.mvm  = MVM(config)
+        self.adc  = ADC(config)
 
 
         # Calculated parameters

@@ -29,7 +29,7 @@ class RRAM:
         self.dig_arr = np.empty([self.y, self.x])
 
         # ADC
-        self.adc = ADC(self.n_bit, gp.mvm.active_rows,\
+        self.adc = ADC(gp, self.n_bit, gp.mvm.active_rows,\
                        self.ron, self.roff, self.rvar, self.vdiff)
 
     def write(self, weights, res):
@@ -72,8 +72,6 @@ class RRAM:
         for i in range(res):
             v = ((ifm>>i)&1)*(self.vdiff)
             i_out = np.dot(v, self.arr)
-            #dout = dout + (self.adc(i_out)<<i)
-            #for (d, io) in zip(dout, i_out):
             for j in range(self.x):
                 dout[0,j] = dout[0,j] + (self.adc.convert(i_out[j])<<i)
 
@@ -93,11 +91,11 @@ class RRAM:
 
         
 
-    def adc_old(self, i_in):
-        #bits = np.ceil(self.n_bit + np.log2(gp.mvm.active_rows))
+    #def adc_old(self, i_in):
+    #    #bits = np.ceil(self.n_bit + np.log2(gp.mvm.active_rows))
 
-        i_lsb = self.vdiff*self.glsb
-        return np.array(np.floor((i_in+i_lsb/2)/i_lsb),dtype=int)
+    #    i_lsb = self.vdiff*self.glsb
+    #    return np.array(np.floor((i_in+i_lsb/2)/i_lsb),dtype=int)
 
 
     #def graph(self):
