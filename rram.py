@@ -6,8 +6,10 @@ from adc import ADC
 class RRAM:
     
     def __init__(self, gp):
+        # Global Parameters
         self.gp = gp
 
+        # RRAM Parameters
         self.ron  = gp.rram.ron
         self.roff = gp.rram.roff
         self.rvar = gp.rram.rvar
@@ -31,6 +33,9 @@ class RRAM:
         # ADC
         self.adc = ADC(gp, self.n_bit, gp.mvm.active_rows,\
                        self.ron, self.roff, self.rvar, self.vdiff)
+
+        # Energy
+        self.e_read = 0
 
     def write(self, weights, res):
         # Helper variables
@@ -74,6 +79,7 @@ class RRAM:
             i_out = np.dot(v, self.arr)
             for j in range(self.x):
                 dout[0,j] = dout[0,j] + (self.adc.convert(i_out[j])<<i)
+                self.e_read += self.adc.energy
 
         dout = np.array(dout,dtype=int)
 
@@ -89,7 +95,6 @@ class RRAM:
 
         return out
 
-        
 
     #def adc_old(self, i_in):
     #    #bits = np.ceil(self.n_bit + np.log2(gp.mvm.active_rows))

@@ -10,9 +10,11 @@ def test_mvm():
     # Default global params
     gp = GlobalParameters()
 
-    dim = [32, 64]
-    n_bit = [1,2,4]
-    active_rows = [1, 2, 3, 8, 16]
+    dim = [64]
+    n_bit = [1]
+    #active_rows = [1, 2, 3, 8, 16, 20, 24, 28, 32]
+    #active_rows = [1, 2, 8, 16, 32, 64]
+    active_rows = [1, 2, 4]
     settings = [[d,n,a] for d in dim for n in n_bit for a in active_rows]
 
     print('R-Dim | Nb | AR')
@@ -36,19 +38,24 @@ def test_mvm():
         
         start = time.time()
         result = mvm.dot(vec, mat, res)
-        print('{:.2f}'.format((time.time()-start)*1e3), end=' ')
+        print('{:.2f}'.format(mvm.e_read*1e12), end=' ')
 
-        start = time.time()
         result_t = mvm.dot_truth(vec, mat, res)
-        print('{:.2f}'.format((time.time()-start)*1e3), end=' ')
-
 
         if False in (result == result_t):
             print("Fail")
         else:
             print("Pass")
 
+        #start = time.time()
+        #print('{:.2f}'.format((time.time()-start)*1e3), end=' ')
 
+
+def energy_graphs():
+    gp = GlobalParameters()
+    rram = RRAM(gp)
+    rram.adc.energy_calc(plot=True)
+    print("ADC resolution: ", rram.adc.N)
 
 def test_rram():
     M = 1 
@@ -82,4 +89,5 @@ def test_rram():
     
 
 if __name__=="__main__":
-    test_mvm()
+    #test_mvm()
+    energy_graphs()

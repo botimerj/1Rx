@@ -11,10 +11,10 @@ def main():
     # RRAM settings
 
     n_rows = 3
-    n_bit = 2
+    n_bit = 1
     roff = 1e6
-    ron  = 1e3
-    rvar_exp = 0.0001
+    ron  = 1e4
+    rvar_exp = 0.029
 
     vdiff = 0.1
 
@@ -55,28 +55,38 @@ def main():
 
 
     # Plot number line
-    fig = plt.figure(1)
-    ax = fig.add_subplot(111)
-    irange = imax-imin
-    #ax.set_xlim(imin-irange*0.1,imax+irange*0.1)
-    ax.set_ylim(0, 10)
+    fig, ax = plt.subplots(1)
+    ax.get_yaxis().set_ticks([])
+    ax.set_ylim(0, 8)
+    ax.set_xlabel('Iout (uA)')
+    plt.title('RRAM Read Currents')
     
-    plt.hlines(2, imin, imax)
 
-    for i in i_list_samp:
-        plt.vlines(i, 2, 5)
+    for i in i_list_avg:
+        plt.vlines(i*1e6, 2, 5)
         #plt.text(i, 3, '{:.2f}'.format(i*1e6), horizontalalignment='center')
 
     for i in adc.i_ref:
-        plt.vlines(i, 2, 8)
+        plt.vlines((i-adc.i_off)*1e6, 2, 7, 'r')
 
+    i_max = 0
+    i_min = 0
     for i in range(len(i_list_avg)):
         mu = i_list_avg[i]
         sig = i_list_std[i]
         x = np.linspace(mu-6*sig, mu+6*sig, 100)
         y = mlab.normpdf(x, mu, sig)
-        plt.plot(x, 2*y/np.max(y)+2)
+        plt.plot(x*1e6, 2*y/np.max(y)+2)
 
+        # Get i_max and i_min
+        if np.min(x) < i_min:
+            i_min = np.min(x)
+        if np.max(x) > i_max:
+            i_max = np.max(x)
+
+    i_range = i_max-i_min
+    ax.set_xlim((i_min-i_range*0.1)*1e6,(i_max+i_range*0.1)*1e6)
+    plt.hlines(2, i_min*1e6, i_max*1e6)
     plt.show()
 
     #B = 20

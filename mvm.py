@@ -8,7 +8,7 @@ class MVM():
         self.gp = gp
 
         # Energy variables
-        self.read_energy = 0
+        self.e_read = 0
         self.write_energy = 0
 
         # Mapping parameters
@@ -93,6 +93,11 @@ class MVM():
 
         # Truncate unsed registers
         result = result[:mat_q.shape[1]]
+
+        # Calculate Energy consumed
+        for i in range(self.rram_arr_size[0]): 
+            for j in range(self.rram_arr_size[1]):
+                self.e_read += rram_arr[i][j].e_read
 
         # Add in bias
         result = result - bias_reg
