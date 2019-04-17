@@ -3,6 +3,7 @@ import numpy as np
 
 class ADC():
     def __init__(self, gp, n_bit, n_rows, ron, roff, rvar_exp, vdiff):
+        self.gp = gp
         self.N = int(n_bit + np.floor(np.log2(n_bit*n_rows)))
 
         # Reference generation
@@ -36,16 +37,18 @@ class ADC():
 
     def energy_calc(self, plot=False):
         # sense + e_rram + N*(pre_amp + comparator + shift + accumulation)
-        t_sense = t_amp = t_comp = t_logic = 1e-9
+        t_sense = t_amp = t_comp = t_logic = 6e-9
         vdd = 1
         e_sense = vdd*10e-6*t_sense # 1V * 10uA * 1ns
         e_rram  = vdd*self.i_ref[0]*t_sense
 
-        e_preamp = vdd*self.i_ref[0]*t_amp
+        e_preamp = 2*vdd*self.i_ref[0]*t_amp
         e_comparator = vdd*10e-6*t_comp
 
-        e_shift = vdd*10e-6*t_logic
-        e_accum = vdd*10e-6*t_logic
+        #e_shift = vdd*10e-6*t_logic
+        #e_accum = vdd*10e-6*t_logic
+        e_accum = 5e-15*self.N*np.floor(np.log2(self.gp.rram.size_y)) # 1fJ per 1b register 
+        e_shift = 5e-15*self.N
 
         self.energy = e_sense + e_rram + self.N*(e_preamp + e_comparator + e_shift + e_accum)
 
